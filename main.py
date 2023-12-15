@@ -25,11 +25,10 @@ if __name__ == "__main__":
                 MessageHandler(filters=filters.Document.ALL, callback=userDocRecipt),
             ],
         },
-        fallbacks=[CommandHandler("cancel", preorder_cancel)],
+        fallbacks=[CommandHandler("cancel", preorder_cancel),CallbackQueryHandler(preorder_cancel,pattern='^Cancel$')],
     )
     acceptQueryHandler = CallbackQueryHandler(acceptHandeling,pattern='^Accept$')
-    rejectQueryHandler = CallbackQueryHandler(acceptHandeling,pattern='^Reject$')
-
+    rejectQueryHandler = CallbackQueryHandler(rejectHandeling,pattern='^Reject$')
 
     application.add_handler(mainCommandHandler)
     application.add_handler(preorderConversationHandler)

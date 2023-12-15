@@ -11,25 +11,29 @@ PREORDER_STATE, PREORDER_CHOOSE, PREORDER_CONFIRMED_STATE, PREORDER_CANCEL_STATE
 async def start(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text(
         text=WELCOME_MESSAGE,
-        reply_markup=ReplyKeyboardMarkup([["/preorder"]],resize_keyboard=True)
+        # reply_markup=ReplyKeyboardMarkup([["/preorder"]],resize_keyboard=True)
     )
 
 async def preorderChoose(update: Update, context: CallbackContext) -> int:
     keyboard = [
-        [InlineKeyboardButton('💴 Rial', callback_data='Rial'),
+        [InlineKeyboardButton('💴 ریال', callback_data='Rial'),
          InlineKeyboardButton('💳 Paypal', callback_data='Paypal')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
         text=WHICHTYPE,
         reply_markup=reply_markup,
+
     )
     return PREORDER_CHOOSE
 
 async def waitingRecipt(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(text=f"{update.callback_query.data} has been chosen")
+    if update.callback_query.data == 'Rial':
+        await query.edit_message_text(text=f"روش ریالی انتخاب شد")
+    elif update.callback_query.data == 'Paypal':
+        await query.edit_message_text(text=f"روش پیپال انتخاب شد")
     keyboard = [
         [InlineKeyboardButton('🚫 Cancel', callback_data='Cancel'),]
     ]
@@ -126,7 +130,7 @@ async def userDocRecipt(update: Update, context: CallbackContext) -> int:
 async def preorder_cancel(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
-    await query.edit_message_text(text="Canceled")
+    await query.edit_message_text(text="Canceled\n برای پیش خرید /preorder را ارسال کنید")
     return ConversationHandler.END
 
 
@@ -157,6 +161,20 @@ async def rejectHandeling(update: Update, context: CallbackContext) -> int:
         chat_id=credentials['user_id'],
         text=REJECTED
     )
+    if update.effective_message.text:
+        await update.effective_message.edit_text(
+            update.effective_message.text+
+            "\n-------------------------"+
+            "\nAdmin Reject : "+
+            f"{update.callback_query.from_user.full_name}"
+            )
+    elif update.effective_message.caption:
+        await update.effective_message.edit_caption(
+            update.effective_message.caption+
+            "\n-------------------------"+
+            "\nAdmin Reject : "+
+            f"{update.callback_query.from_user.full_name}"
+            )
 
 
 
