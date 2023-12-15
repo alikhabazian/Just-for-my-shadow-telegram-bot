@@ -3,6 +3,7 @@ from telegram import Update,ReplyKeyboardMarkup,InlineKeyboardButton,InlineKeybo
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
 from dotenv import load_dotenv
 import os
+from files import datas
 
 load_dotenv()
 RECEIVER=os.getenv("RECEIVER")
@@ -140,6 +141,22 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
         chat_id=credentials['user_id'],
         text=ACCEPTED
     )
+    for data in datas:
+        if data['type']=='mp3':
+            await context.bot.send_audio(
+                chat_id=credentials['user_id'],
+                audio=data['file_id'],
+            )
+        elif data['type']=='photo':
+            await context.bot.send_document(
+                chat_id=credentials['user_id'],
+                document=data['file_id'],
+            )
+        elif data['type']=='pdf':
+            await context.bot.send_document(
+                chat_id=credentials['user_id'],
+                document=data['file_id'],
+            )
     if update.effective_message.text:
         await update.effective_message.edit_text(
             update.effective_message.text+
