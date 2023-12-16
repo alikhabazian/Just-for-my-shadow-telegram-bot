@@ -5,18 +5,18 @@ from functions import *
 
 # TODO cleaning code
 load_dotenv()
-BOT_TOKEN= os.getenv("BOT_TOKEN")
+BOTTOKEN= os.getenv("BOTTOKEN")
 
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    application = ApplicationBuilder().token(BOTTOKEN).build()
     mainCommandHandler=CommandHandler("start", start)
     preorderConversationHandler=ConversationHandler(
         entry_points=[CommandHandler("preorder", preorderChoose)],
         states={
             PREORDER_CHOOSE:[
-                CallbackQueryHandler(waitingRecipt,pattern='^Rial$'),
-                CallbackQueryHandler(waitingRecipt,pattern='^Paypal$'),
+                CallbackQueryHandler(waitingRecipt,pattern='^Rial$|^Paypal$'),
+                # CallbackQueryHandler(waitingRecipt,pattern='^Paypal$'),
                 # MessageHandler(filters=filters.Regex(r'^[\s\S]*$'), user_charge_acc_inputed),
             ],
             PREORDER_STATE: [

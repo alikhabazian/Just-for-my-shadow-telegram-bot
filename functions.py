@@ -4,16 +4,43 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from dotenv import load_dotenv
 import os
 from files import datas
+import datetime
+from db import connect_to_database
+import uuid
 
 load_dotenv()
 RECEIVER=os.getenv("RECEIVER")
 PREORDER_STATE, PREORDER_CHOOSE, PREORDER_CONFIRMED_STATE, PREORDER_CANCEL_STATE = range(4)
 
 async def start(update: Update, context: CallbackContext) -> int:
+    try: 
+        db_client = connect_to_database(os.getenv("DBSTRING"))
+    except Exception as e:
+        print("Failed to connect to the database!")
+
     await update.message.reply_text(
         text=WELCOME_MESSAGE,
         # reply_markup=ReplyKeyboardMarkup([["/preorder"]],resize_keyboard=True)
     )
+
+    try:
+        user = db_client[os.getenv("DBNAME")].users.find_one({'user_id': update.effective_chat.id})
+        if user:
+            print("user is here")
+            return
+    except Exception as e:
+        print(e)
+
+    try:
+        db_client[os.getenv("DBNAME")].users.insert_one({
+            'user_id': update.message.from_user.id,
+            'full_name': update.message.from_user.full_name,
+            'username': update.message.from_user.username,
+            'join_date': update.message.date,
+        })
+    except Exception as e:
+        print("Error")
+        print(e)
 
 async def preorderChoose(update: Update, context: CallbackContext) -> int:
     keyboard = [
@@ -24,7 +51,6 @@ async def preorderChoose(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text(
         text=WHICHTYPE,
         reply_markup=reply_markup,
-
     )
     return PREORDER_CHOOSE
 
@@ -38,23 +64,37 @@ async def waitingRecipt(update: Update, context: CallbackContext) -> int:
     keyboard = [
         [InlineKeyboardButton('🚫 Cancel', callback_data='Cancel'),]
     ]
+    context.user_data['payment_method'] = update.callback_query.data
+
     reply_markup = InlineKeyboardMarkup(keyboard)
+    result=None
     if update.callback_query.data == 'Rial':
-        await context.bot.send_message(
+        result=await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=RIAL,
             reply_markup=reply_markup,
         )
+
     elif update.callback_query.data == 'Paypal':
-        await context.bot.send_message(
+        result=await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=PAYPAL,
             reply_markup=reply_markup,
         )
     context.user_data['payment_method'] = update.callback_query.data
+    context.user_data['removing_cancel'] = result.id
+    print(result)
+    print(result.id)
+
     return PREORDER_STATE
 
+
 async def userTextRecipt(update: Update, context: CallbackContext) -> int:
+    try: 
+        db_client = connect_to_database(os.getenv("DBSTRING"))
+    except Exception as e:
+        print("Failed to connect to the database!")
+
     keyboard = [
         [InlineKeyboardButton('❌ Reject', callback_data='Reject'),
          InlineKeyboardButton('✅ Accept', callback_data='Accept')]
@@ -76,8 +116,37 @@ async def userTextRecipt(update: Update, context: CallbackContext) -> int:
     ,
         reply_markup=reply_markup
     )
+
+    try:
+        db_client[os.getenv("DBNAME")].payments.insert_one({
+            'user_id': update.effective_chat.id,
+            'payment_receipt': update.effective_message.photo[0].file_id,
+            'payment_receipt_type': 'text',
+            'payment_method': context.user_data['payment_method'],
+            'date': datetime.datetime.now().isoformat(),
+            'verified': False,
+            'rejected': False
+        })
+    except:
+        # ToDo:
+        print("Error2-1")
+
+    await update.message.reply_text(
+        text=THANKFUL_MESSAGE,
+    )
+    await context.bot.editMessageReplyMarkup(message_id=context.user_data['removing_cancel'],chat_id=update.effective_chat.id)
+
+    db_client.close()
+
     return ConversationHandler.END
+
+
 async def userImageRecipt(update: Update, context: CallbackContext) -> int:
+    try: 
+        db_client = connect_to_database(os.getenv("DBSTRING"))
+    except Exception as e:
+        print("Failed to connect to the database!")
+
     keyboard = [
         [InlineKeyboardButton('❌ Reject', callback_data='Reject'),
          InlineKeyboardButton('✅ Accept', callback_data='Accept')]
@@ -101,9 +170,36 @@ async def userImageRecipt(update: Update, context: CallbackContext) -> int:
         f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n",
         reply_markup=reply_markup
     )
+
+    try:
+        db_client[os.getenv("DBNAME")].payments.insert_one({
+            'user_id': update.effective_chat.id,
+            'payment_receipt': update.effective_message.photo[0].file_id,
+            'payment_receipt_type': 'image',
+            'payment_method': context.user_data['payment_method'],
+            'date': datetime.datetime.now().isoformat(),
+            'verified': False,
+            'rejected': False
+        })
+    except:
+        # ToDo:
+        print("Error2-2")
+
+    await update.message.reply_text(
+        text=THANKFUL_MESSAGE,
+    )
+    await context.bot.editMessageReplyMarkup(message_id=context.user_data['removing_cancel'],chat_id=update.effective_chat.id)
+
+    db_client.close()
+
     return ConversationHandler.END
 
 async def userDocRecipt(update: Update, context: CallbackContext) -> int:
+    try: 
+        db_client = connect_to_database(os.getenv("DBSTRING"))
+    except Exception as e:
+        print("Failed to connect to the database!")
+
     keyboard = [
         [InlineKeyboardButton('❌ Reject', callback_data='Reject'),
          InlineKeyboardButton('✅ Accept', callback_data='Accept')]
@@ -124,18 +220,47 @@ async def userDocRecipt(update: Update, context: CallbackContext) -> int:
         f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n",
         reply_markup=reply_markup
     )
+
+    try:
+        db_client[os.getenv("DBNAME")].payments.insert_one({
+            'user_id': update.effective_chat.id,
+            'payment_receipt': update.effective_message.document.file_id,
+            'payment_receipt_type': 'document',
+            'payment_method': context.user_data['payment_method'],
+            'date': datetime.datetime.now().isoformat(),
+            'verified': False,
+            'rejected': False
+        })
+    except:
+        # ToDo:
+        print("Error2-3")
+
+    await update.message.reply_text(
+        text=THANKFUL_MESSAGE,
+    )
+    await context.bot.editMessageReplyMarkup(message_id=context.user_data['removing_cancel'],chat_id=update.effective_chat.id)
+
+    db_client.close()
+
     return ConversationHandler.END
 
 
-
+#  ToDo name of def and vars
 async def preorder_cancel(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
     await query.edit_message_text(text="Canceled\n برای پیش خرید /preorder را ارسال کنید")
+
+    
     return ConversationHandler.END
 
 
 async def acceptHandeling(update: Update, context: CallbackContext) -> int:
+    try: 
+        db_client = connect_to_database(os.getenv("DBSTRING"))
+    except Exception as e:
+        print("Failed to connect to the database!")
+
     credentials = get_user_credentials(update.effective_message)
     await context.bot.send_message(
         chat_id=credentials['user_id'],
@@ -148,7 +273,7 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
                 audio=data['file_id'],
             )
         elif data['type']=='photo':
-            await context.bot.send_document(
+            await context.bot.send_photo(
                 chat_id=credentials['user_id'],
                 document=data['file_id'],
             )
@@ -172,7 +297,17 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
             f"{update.callback_query.from_user.full_name}"
             )
 
+    db_client['DBNAME'].payments.update_one({'transaction_id': credentials['uuid']}, { "$set": {"verified": True}})
+
+    return ConversationHandler.END
+
+
 async def rejectHandeling(update: Update, context: CallbackContext) -> int:
+    try: 
+        db_client = connect_to_database(os.getenv("DBSTRING"))
+    except Exception as e:
+        print("Failed to connect to the database!")
+
     credentials = get_user_credentials(update.effective_message)
     await context.bot.send_message(
         chat_id=credentials['user_id'],
@@ -193,6 +328,9 @@ async def rejectHandeling(update: Update, context: CallbackContext) -> int:
             f"{update.callback_query.from_user.full_name}"
             )
 
+    db_client['DBNAME'].payments.update_one({'transaction_id': credentials['uuid']}, { "$set": {"rejected": True}})
+
+    return ConversationHandler.END
 
 
 def get_user_credentials(effective_message):
@@ -217,5 +355,7 @@ def get_user_credentials(effective_message):
             credentials['user_id'] = int(line.split(':')[1])
         elif 'payment_method' in line:
             credentials['payment_method'] = line.split(':')[1]
+        elif 'uuid' in line:
+            credentials['uuid'] = line.split(':')[1]
     return credentials
 

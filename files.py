@@ -36,22 +36,22 @@ datas=[
     },
     {
     "name": "Atur Hekmat",
-    "type": "photo",
+    "type": "document",
     "file_id":"BQACAgQAAxkBAAIBFWV8W65LRkiCwAhEvwgJU79Y89Q6AAIzEQACtI_pU7L1Aq5eLPdrMwQ",
     },
     {
     "name": "Faghat Baraye Saye Am Cover",
-    "type": "photo",
+    "type": "document",
     "file_id":"BQACAgQAAxkBAAIBFmV8W677w4BGvfQAAYl9MFuT96dXSwACNBEAArSP6VO2G7yFDUiNgTME",
     },
     {
     "name": "Baraye To - Atur Hekmat",
-    "type": "photo",
+    "type": "document",
     "file_id":"BQACAgQAAxkBAAIBF2V8W65fXbb-mZiweEPwMRLdySXEAAI1EQACtI_pU4izMMlHhcHAMwQ",
     },
     {
     "name": "Qazule",
-    "type": "photo",
+    "type": "document",
     "file_id":"BQACAgQAAxkBAAIBGGV8W65Cm-EZznKSIQxmH4xLyauGAAI2EQACtI_pU_7FfIExa2N4MwQ",
     },
 ]
