@@ -10,6 +10,8 @@ import uuid
 
 load_dotenv()
 RECEIVER=os.getenv("RECEIVER")
+DBNAME=os.getenv("DBNAME")
+
 PREORDER_STATE, PREORDER_CHOOSE, PREORDER_CONFIRMED_STATE, PREORDER_CANCEL_STATE = range(4)
 
 async def start(update: Update, context: CallbackContext) -> int:
@@ -24,7 +26,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     )
 
     try:
-        user = db_client[os.getenv("DBNAME")].users.find_one({'user_id': update.effective_chat.id})
+        user = db_client[DBNAME].users.find_one({'user_id': update.effective_chat.id})
         if user:
             print("user is here")
             return
@@ -32,7 +34,7 @@ async def start(update: Update, context: CallbackContext) -> int:
         print(e)
 
     try:
-        db_client[os.getenv("DBNAME")].users.insert_one({
+        db_client[DBNAME].users.insert_one({
             'user_id': update.message.from_user.id,
             'full_name': update.message.from_user.full_name,
             'username': update.message.from_user.username,
@@ -104,6 +106,9 @@ async def userTextRecipt(update: Update, context: CallbackContext) -> int:
     context.user_data['username'] = update.effective_chat.username
     context.user_data['user_id'] = update.effective_chat.id
     context.user_data['payment_receipt'] = update.message.text
+
+    transaction_id = str(uuid.uuid4())
+
     await context.bot.send_message(
         chat_id=RECEIVER,
         text=
@@ -111,24 +116,26 @@ async def userTextRecipt(update: Update, context: CallbackContext) -> int:
         f"payment_method:{context.user_data['payment_method']}\n" +
         (f"username:@{context.user_data['username']}\n" if (context.user_data['username'] is not None) else "") +
         f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n"+
+        f"transaction_id:{transaction_id}\n" +
         "-------------------------\n" +
-        context.user_data['payment_receipt']
-    ,
+        context.user_data['payment_receipt'],
         reply_markup=reply_markup
     )
 
     try:
-        db_client[os.getenv("DBNAME")].payments.insert_one({
+        db_client[DBNAME].payments.insert_one({
+            'transaction_id': transaction_id,
             'user_id': update.effective_chat.id,
-            'payment_receipt': update.effective_message.photo[0].file_id,
+            'payment_receipt': update.effective_message.text,
             'payment_receipt_type': 'text',
             'payment_method': context.user_data['payment_method'],
             'date': datetime.datetime.now().isoformat(),
             'verified': False,
             'rejected': False
         })
-    except:
+    except Exception as e:
         # ToDo:
+        print(e)
         print("Error2-1")
 
     await update.message.reply_text(
@@ -158,6 +165,7 @@ async def userImageRecipt(update: Update, context: CallbackContext) -> int:
     context.user_data['username'] = update.effective_chat.username
     context.user_data['user_id'] = update.effective_chat.id
 
+    transaction_id = str(uuid.uuid4())
 
     await context.bot.send_photo(
         # TODO
@@ -167,12 +175,14 @@ async def userImageRecipt(update: Update, context: CallbackContext) -> int:
         f"Pre-order\n" +
         f"payment_method:{context.user_data['payment_method']}\n" +
         (f"username:@{context.user_data['username']}\n" if (context.user_data['username'] is not None) else "") +
-        f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n",
+        f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n" +
+        f"transaction_id:{transaction_id}\n",
         reply_markup=reply_markup
     )
 
     try:
-        db_client[os.getenv("DBNAME")].payments.insert_one({
+        db_client[DBNAME].payments.insert_one({
+            'transaction_id': transaction_id,
             'user_id': update.effective_chat.id,
             'payment_receipt': update.effective_message.photo[0].file_id,
             'payment_receipt_type': 'image',
@@ -210,6 +220,9 @@ async def userDocRecipt(update: Update, context: CallbackContext) -> int:
     context.user_data['full_name'] = update.effective_chat.full_name
     context.user_data['username'] = update.effective_chat.username
     context.user_data['user_id'] = update.effective_chat.id
+
+    transaction_id = str(uuid.uuid4())
+
     await context.bot.send_document(
         chat_id=RECEIVER,
         document=update.message.document.file_id,
@@ -217,12 +230,14 @@ async def userDocRecipt(update: Update, context: CallbackContext) -> int:
         f"Pre-order\n" +
         f"payment_method:{context.user_data['payment_method']}\n" +
         (f"username:@{context.user_data['username']}\n" if (context.user_data['username'] is not None) else "") +
-        f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n",
+        f"user_id:{context.user_data['user_id']}\nfull_name:{context.user_data['full_name']}\n" +
+        f"transaction_id:{transaction_id}\n",
         reply_markup=reply_markup
     )
 
     try:
-        db_client[os.getenv("DBNAME")].payments.insert_one({
+        db_client[DBNAME].payments.insert_one({
+            'transaction_id': transaction_id,
             'user_id': update.effective_chat.id,
             'payment_receipt': update.effective_message.document.file_id,
             'payment_receipt_type': 'document',
@@ -277,7 +292,7 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
                 chat_id=credentials['user_id'],
                 document=data['file_id'],
             )
-        elif data['type']=='pdf':
+        elif data['type']=='document':
             await context.bot.send_document(
                 chat_id=credentials['user_id'],
                 document=data['file_id'],
@@ -297,7 +312,7 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
             f"{update.callback_query.from_user.full_name}"
             )
 
-    db_client['DBNAME'].payments.update_one({'transaction_id': credentials['uuid']}, { "$set": {"verified": True}})
+    db_client[DBNAME].payments.update_one({'transaction_id': credentials['transaction_id']}, { "$set": {"verified": True}})
 
     return ConversationHandler.END
 
@@ -327,8 +342,9 @@ async def rejectHandeling(update: Update, context: CallbackContext) -> int:
             "\nAdmin Reject : "+
             f"{update.callback_query.from_user.full_name}"
             )
-
-    db_client['DBNAME'].payments.update_one({'transaction_id': credentials['uuid']}, { "$set": {"rejected": True}})
+    print("sdsafd")
+    print(credentials['transaction_id'])
+    print(db_client[DBNAME].payments.update_one({'transaction_id': credentials['transaction_id']}, { "$set": {"rejected": True}}))
 
     return ConversationHandler.END
 
@@ -355,7 +371,7 @@ def get_user_credentials(effective_message):
             credentials['user_id'] = int(line.split(':')[1])
         elif 'payment_method' in line:
             credentials['payment_method'] = line.split(':')[1]
-        elif 'uuid' in line:
-            credentials['uuid'] = line.split(':')[1]
+        elif 'transaction_id' in line:
+            credentials['transaction_id'] = line.split(':')[1]
     return credentials
 
