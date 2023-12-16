@@ -1,6 +1,6 @@
 from constant import *
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext,CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext,CallbackQueryHandler,PicklePersistence
 from functions import *
 
 # TODO cleaning code
@@ -9,7 +9,8 @@ BOTTOKEN= os.getenv("BOTTOKEN")
 
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(BOTTOKEN).build()
+    persistence = PicklePersistence(filepath="conversationbot")
+    application = ApplicationBuilder().token(BOTTOKEN).arbitrary_callback_data(True).persistence(persistence).build()
     mainCommandHandler=CommandHandler("start", start)
     preorderConversationHandler=ConversationHandler(
         entry_points=[CommandHandler("preorder", preorderChoose)],

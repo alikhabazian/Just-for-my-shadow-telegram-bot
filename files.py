@@ -54,4 +54,14 @@ datas=[
     "type": "document",
     "file_id":"BQACAgQAAxkBAAIBGGV8W65Cm-EZznKSIQxmH4xLyauGAAI2EQACtI_pU_7FfIExa2N4MwQ",
     },
+    {
+    "name": "Qazule image",
+    "type": "document",
+    "file_id":"BQACAgQAAxkBAAIEF2V-MoNNviQqCPCbJ3wFNdE-_RuxAALnDwACooPxU8WRx38C0hm_MwQ",
+    },
+    {
+    "name": "Qazule video",
+    "type": "document",
+    "file_id":"BQACAgQAAxkBAAIEGGV-M8AHakN_csXhx2GvDXSUoHBzAAK_EQACZE35U_vlTyQm11g5MwQ",
+    },
 ]

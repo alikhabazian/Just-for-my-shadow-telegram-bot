@@ -1,6 +1,6 @@
 from constant import *
 from telegram import Update,ReplyKeyboardMarkup,InlineKeyboardButton,InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackContext,PicklePersistence
 from dotenv import load_dotenv
 import os
 from files import datas
@@ -277,10 +277,7 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
         print("Failed to connect to the database!")
 
     credentials = get_user_credentials(update.effective_message)
-    await context.bot.send_message(
-        chat_id=credentials['user_id'],
-        text=ACCEPTED
-    )
+
     for data in datas:
         if data['type']=='mp3':
             await context.bot.send_audio(
@@ -297,6 +294,11 @@ async def acceptHandeling(update: Update, context: CallbackContext) -> int:
                 chat_id=credentials['user_id'],
                 document=data['file_id'],
             )
+
+    await context.bot.send_message(
+        chat_id=credentials['user_id'],
+        text=ACCEPTED
+    )
     if update.effective_message.text:
         await update.effective_message.edit_text(
             update.effective_message.text+
