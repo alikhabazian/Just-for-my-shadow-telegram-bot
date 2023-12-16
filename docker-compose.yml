@@ -1,0 +1,17 @@
+version: "3.3"
+services:
+  bot:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: tgbot-img
+    container_name: just4fun-tgbot-cnt
+    volumes:
+      - .env:/app/.env
+    networks:
+      - net
+    restart: unless-stopped
+  
+networks:
+  net:
+    name: 'net'
