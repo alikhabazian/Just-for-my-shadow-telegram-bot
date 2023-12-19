@@ -91,6 +91,11 @@ async def waitingRecipt(update: Update, context: CallbackContext) -> int:
     return PREORDER_STATE
 
 
+async def preorder_wrong_inputed(update: Update, context: CallbackContext) -> int:
+    await update.message.reply_text(
+        text=WRONGINPUT,
+    )
+    return PREORDER_STATE
 async def userTextRecipt(update: Update, context: CallbackContext) -> int:
     try: 
         db_client = connect_to_database(os.getenv("DBSTRING"))

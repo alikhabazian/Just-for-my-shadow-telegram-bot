@@ -21,6 +21,7 @@ if __name__ == "__main__":
                 # MessageHandler(filters=filters.Regex(r'^[\s\S]*$'), user_charge_acc_inputed),
             ],
             PREORDER_STATE: [
+                MessageHandler(filters=filters.COMMAND, callback=preorder_wrong_inputed),
                 MessageHandler(filters=filters.Regex(r'^[\s\S]*$'), callback=userTextRecipt),
                 MessageHandler(filters=filters.PHOTO, callback=userImageRecipt),
                 MessageHandler(filters=filters.Document.ALL, callback=userDocRecipt),
