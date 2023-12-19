@@ -85,6 +85,7 @@ async def waitingRecipt(update: Update, context: CallbackContext) -> int:
         )
     context.user_data['payment_method'] = update.callback_query.data
     context.user_data['removing_cancel'] = result.id
+
     print(result)
     print(result.id)
 
@@ -96,12 +97,8 @@ async def preorder_wrong_inputed(update: Update, context: CallbackContext) -> in
         text=WRONGINPUT,
     )
 
-    query = update.callback_query
-    await query.answer()
-    if context.user_data['payment_method'] == 'Rial':
-        await query.edit_message_text(text=RIAL)
-    elif context.user_data['payment_method'] == 'Paypal':
-        await query.edit_message_text(text=PAYPAL)
+    await context.bot.editMessageReplyMarkup(message_id=context.user_data['removing_cancel'],
+                                             chat_id=update.effective_chat.id)
 
 
     keyboard = [
@@ -109,7 +106,7 @@ async def preorder_wrong_inputed(update: Update, context: CallbackContext) -> in
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     result=None
-    if context.user_data['payment_method']== 'Rial':
+    if context.user_data['payment_method'] == 'Rial':
         result=await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=RIAL,
