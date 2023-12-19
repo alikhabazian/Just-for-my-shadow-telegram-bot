@@ -95,6 +95,35 @@ async def preorder_wrong_inputed(update: Update, context: CallbackContext) -> in
     await update.message.reply_text(
         text=WRONGINPUT,
     )
+
+    query = update.callback_query
+    await query.answer()
+    if context.user_data['payment_method'] == 'Rial':
+        await query.edit_message_text(text=RIAL)
+    elif context.user_data['payment_method'] == 'Paypal':
+        await query.edit_message_text(text=PAYPAL)
+
+
+    keyboard = [
+        [InlineKeyboardButton('🚫 Cancel', callback_data='Cancel'), ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    result=None
+    if update.callback_query.data == 'Rial':
+        result=await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=RIAL,
+            reply_markup=reply_markup,
+        )
+
+    elif update.callback_query.data == 'Paypal':
+        result=await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=PAYPAL,
+            reply_markup=reply_markup,
+        )
+    context.user_data['removing_cancel'] = result.id
+    # context.user_data['removing_cancel']
     return PREORDER_STATE
 async def userTextRecipt(update: Update, context: CallbackContext) -> int:
     try: 
