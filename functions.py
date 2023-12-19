@@ -109,14 +109,14 @@ async def preorder_wrong_inputed(update: Update, context: CallbackContext) -> in
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     result=None
-    if update.callback_query.data == 'Rial':
+    if context.user_data['payment_method']== 'Rial':
         result=await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=RIAL,
             reply_markup=reply_markup,
         )
 
-    elif update.callback_query.data == 'Paypal':
+    elif context.user_data['payment_method'] == 'Paypal':
         result=await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=PAYPAL,
